@@ -121,6 +121,29 @@ def parse_bonding_curve(data: bytes) -> dict[str, Any]:
             "token_total_supply": total, "complete": complete}
 
 
+def aggregate_token_accounts(items: list[dict[str, Any]],
+                             top_n: int = 20) -> list[TokenHolding]:
+    """Aggregate DAS getTokenAccounts rows into per-owner holdings, largest
+    first. Better concentration data than getTokenLargestAccounts (which is
+    per token account and capped at 20)."""
+    by_owner: dict[str, TokenHolding] = {}
+    for it in items:
+        owner = it.get("owner")
+        try:
+            amount = int(it.get("amount") or 0)
+        except (TypeError, ValueError):
+            continue
+        if not owner or amount <= 0:
+            continue
+        held = by_owner.get(owner)
+        if held is None:
+            by_owner[owner] = TokenHolding(address=it.get("address", ""),
+                                           owner=owner, amount=amount)
+        else:
+            held.amount += amount
+    return sorted(by_owner.values(), key=lambda h: h.amount, reverse=True)[:top_n]
+
+
 def _decode_account_data(value: dict[str, Any]) -> bytes:
     data = value.get("data")
     if isinstance(data, list) and data and data[1] == "base64":
@@ -228,6 +251,23 @@ class RpcChainDataProvider:
         return [token_acc[0]["pubkey"], wsol_acc[0]["pubkey"]]
 
     async def get_largest_holders(self, mint: str) -> list[TokenHolding]:
+        try:
+            return await self._largest_holders_standard(mint)
+        except RpcError as exc:
+            # Observed live: Helius' getTokenLargestAccounts index rejects
+            # Token-2022 pump.fun mints with "Invalid param: not a Token mint"
+            # even though getTokenSupply/getAccountInfo accept them. Fall back
+            # to the DAS token-accounts index on the same endpoint.
+            log.info("getTokenLargestAccounts failed for %s (%s); "
+                     "falling back to DAS getTokenAccounts", mint, exc)
+        try:
+            items = await self.rpc.get_token_accounts_das(mint)
+        except RpcError as exc:
+            log.warning("DAS getTokenAccounts also failed for %s: %s", mint, exc)
+            return []
+        return aggregate_token_accounts(items)
+
+    async def _largest_holders_standard(self, mint: str) -> list[TokenHolding]:
         raw = await self.rpc.get_token_largest_accounts(mint)
         holdings = [TokenHolding(address=r["address"], owner=None,
                                  amount=int(r.get("amount", 0))) for r in raw]

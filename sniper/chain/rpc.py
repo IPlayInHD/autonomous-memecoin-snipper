@@ -69,8 +69,10 @@ class RpcClient:
         return self._errors / self._requests if self._requests else 0.0
 
     # -- core -----------------------------------------------------------------
-    async def call(self, method: str, params: list[Any] | None = None,
+    async def call(self, method: str, params: Any = None,
                    retries: int = 2) -> Any:
+        # params is a list for standard RPC methods; DAS-style methods
+        # (e.g. Helius getTokenAccounts) take a params OBJECT instead
         session = await self._ensure_session()
         payload = {"jsonrpc": "2.0", "id": next(self._ids),
                    "method": method, "params": params or []}
@@ -116,6 +118,13 @@ class RpcClient:
     async def get_token_largest_accounts(self, mint: str) -> list[dict[str, Any]]:
         res = await self.call("getTokenLargestAccounts", [mint, self._c()])
         return (res or {}).get("value", [])
+
+    async def get_token_accounts_das(self, mint: str, limit: int = 1000) -> list[dict]:
+        """Helius DAS `getTokenAccounts` (params-as-object; Helius-specific).
+        Fallback for mints the standard getTokenLargestAccounts index rejects —
+        observed with Token-2022 pump.fun mints."""
+        res = await self.call("getTokenAccounts", {"mint": mint, "limit": limit})
+        return (res or {}).get("token_accounts") or []
 
     async def get_token_supply(self, mint: str) -> Optional[dict[str, Any]]:
         res = await self.call("getTokenSupply", [mint, self._c()])
