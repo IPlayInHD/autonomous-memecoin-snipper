@@ -49,7 +49,8 @@ execution:
   slippage_bps: 500
   priority_fee_microlamports: 100000
   compute_units: 120000
-  jupiter_base_url: https://quote-api.jup.ag/v6
+  # free-tier endpoint; the old quote-api.jup.ag host is retired
+  jupiter_base_url: https://lite-api.jup.ag/swap/v1
   live_enabled: false
   jito:
     enabled: false

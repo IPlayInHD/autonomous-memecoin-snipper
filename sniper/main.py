@@ -49,8 +49,12 @@ class Orchestrator:
         self.helius = HeliusClient(cfg.rpc.helius_api_key, self.db,
                                    cfg.filters.deployer_cache_ttl_s)
         self.risk = RiskManager(cfg, self.db, self.rpc)
-        self.queue: asyncio.Queue[LaunchEvent] = asyncio.Queue(maxsize=500)
-        self.detector = LaunchDetector(cfg, self.rpc, self.queue)
+        # queue + detector are created in setup(), INSIDE the running event
+        # loop: on Python 3.9 an asyncio.Queue binds its loop at construction,
+        # and building it here (before asyncio.run) crashes every worker with
+        # "Future attached to a different loop"
+        self.queue: Optional[asyncio.Queue] = None
+        self.detector: Optional[LaunchDetector] = None
         self.clock_trusted = True
         self.paper_executor = None
         self.live_executor = None
@@ -67,6 +71,8 @@ class Orchestrator:
     # ------------------------------------------------------------------ setup
     async def setup(self) -> None:
         cfg = self.cfg
+        self.queue = asyncio.Queue(maxsize=500)
+        self.detector = LaunchDetector(cfg, self.rpc, self.queue)
         self._check_clock()
         self._load_preregistration()
 

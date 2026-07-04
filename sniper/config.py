@@ -118,7 +118,8 @@ class ExecutionConfig:
     slippage_bps: int = 500
     priority_fee_microlamports: int = 100_000   # per CU price for entries
     compute_units: int = 120_000
-    jupiter_base_url: str = "https://quote-api.jup.ag/v6"
+    # Jupiter's free-tier swap API (the old quote-api.jup.ag host is retired)
+    jupiter_base_url: str = "https://lite-api.jup.ag/swap/v1"
     jito: JitoConfig = field(default_factory=JitoConfig)
     paper: PaperModelConfig = field(default_factory=PaperModelConfig)
     # live arming: BOTH this flag and the env ack must be set
