@@ -48,6 +48,10 @@ EXT_NON_TRANSFERABLE = 9
 EXT_PERMANENT_DELEGATE = 12
 EXT_TRANSFER_HOOK = 14
 EXT_CONFIDENTIAL_TRANSFER_MINT = 4
+# benign metadata extensions (name/symbol/URI on-chain). pump.fun mints all
+# Token-2022 tokens with these two; they carry no transfer-control power.
+EXT_METADATA_POINTER = 18
+EXT_TOKEN_METADATA = 19
 
 # Base transaction fee per signature
 BASE_FEE_LAMPORTS = 5_000

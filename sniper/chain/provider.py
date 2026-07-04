@@ -91,7 +91,8 @@ def parse_token2022_extensions(data: bytes) -> Token2022Extensions:
             ext.non_transferable = True
         elif etype == C.EXT_CONFIDENTIAL_TRANSFER_MINT:
             ext.has_confidential_transfer = True
-        elif etype not in (C.EXT_MINT_CLOSE_AUTHORITY,):
+        elif etype not in (C.EXT_MINT_CLOSE_AUTHORITY, C.EXT_METADATA_POINTER,
+                           C.EXT_TOKEN_METADATA):
             ext.unknown_extensions.append(etype)
     return ext
 

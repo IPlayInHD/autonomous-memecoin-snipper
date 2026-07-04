@@ -76,6 +76,17 @@ class TestToken2022:
         data = make_t22_mint_bytes([(77, b"\x01\x02\x03")])
         assert 77 in parse_token2022_extensions(data).unknown_extensions
 
+    def test_metadata_extensions_are_benign(self):
+        """pump.fun mints Token-2022 with MetadataPointer(18) + TokenMetadata(19);
+        neither carries transfer-control power and must not read as unknown."""
+        data = make_t22_mint_bytes([
+            (C.EXT_METADATA_POINTER, pk_bytes(5) + pk_bytes(6)),
+            (C.EXT_TOKEN_METADATA, b"\x00" * 40),
+        ])
+        ext = parse_token2022_extensions(data)
+        assert ext.unknown_extensions == []
+        assert not ext.has_transfer_hook and not ext.has_permanent_delegate
+
     def test_multiple_extensions(self):
         data = make_t22_mint_bytes([
             (C.EXT_TRANSFER_FEE_CONFIG, transfer_fee_payload(bps=100)),

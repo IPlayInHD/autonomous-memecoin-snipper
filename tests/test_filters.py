@@ -92,6 +92,26 @@ async def test_token2022_unknown_extension_rejected(cfg, provider, event):
     assert not result.passed
 
 
+async def test_pumpfun_style_t22_mint_passes(cfg, provider, event):
+    """The live-firehose regression: metadata-only Token-2022 mints (pump.fun's
+    format) must pass; metadata + a hostile extension must still fail."""
+    clean = make_t22_mint_bytes([
+        (C.EXT_METADATA_POINTER, pk_bytes(5) + pk_bytes(6)),
+        (C.EXT_TOKEN_METADATA, b"\x00" * 40),
+    ])
+    provider.mints[event.mint] = parse_mint(clean, C.TOKEN_2022_PROGRAM, event.mint)
+    result = await Token2022Filter().run(event, ctx_for(cfg, provider))
+    assert result.passed
+
+    hostile = make_t22_mint_bytes([
+        (C.EXT_METADATA_POINTER, pk_bytes(5) + pk_bytes(6)),
+        (C.EXT_TRANSFER_HOOK, transfer_hook_payload(pk_bytes(11))),
+    ])
+    provider.mints[event.mint] = parse_mint(hostile, C.TOKEN_2022_PROGRAM, event.mint)
+    result = await Token2022Filter().run(event, FilterContext(cfg, provider))
+    assert not result.passed and "transfer hook" in result.reason
+
+
 async def test_clean_classic_token_passes(cfg, provider, event):
     provider.add_clean_mint(event.mint)
     result = await Token2022Filter().run(event, ctx_for(cfg, provider))
