@@ -1,0 +1,12 @@
+# Core runtime
+aiohttp>=3.9
+PyYAML>=6.0
+cryptography>=42.0
+base58>=2.1
+
+# Solana SDK (well-known, open source). solders is the Rust-backed core used by solana-py.
+solders>=0.21
+
+# Tests
+pytest>=8.0
+pytest-asyncio>=0.23

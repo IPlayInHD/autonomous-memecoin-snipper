@@ -1,0 +1,107 @@
+# Default configuration — paper mode, filter_edge trigger.
+# Secrets (RPC URLs, keys) come from .env, never from this file.
+
+rpc:
+  request_timeout_s: 10.0
+  commitment: confirmed
+  max_latency_ms_halt: 2000.0
+
+trigger:
+  # block_0 | migration | filter_edge  — the hypothesis under test.
+  # block_0 is included as a latency CONTROL ARM: on shared RPC it is expected
+  # to lose structurally, and the latency logs should prove that.
+  mode: filter_edge
+  entry_delay_s: 3.0
+  listen_pumpfun: true
+  listen_pumpswap: true
+  listen_raydium: true
+
+filters:
+  min_initial_liquidity_sol: 5.0
+  max_top_holder_pct: 20.0
+  max_deployer_pct: 10.0
+  max_bundle_supply_pct: 25.0
+  min_deployer_age_days: 1.0
+  max_deployer_prior_tokens: 3
+  max_deployer_prior_rugs: 0
+  max_transfer_fee_bps: 0
+  max_buy_tax_bps: 200
+  max_sell_tax_bps: 200
+  holder_top_n: 10
+  deployer_cache_ttl_s: 21600
+  # extra locker programs: {program_id: label}
+  locker_programs: {}
+
+score_weights:
+  liquidity: 1.0
+  holders: 1.5
+  deployer: 1.5
+  bundle: 1.5
+  lp_status: 2.0
+  honeypot: 2.0
+
+execution:
+  # observe | paper | shadow | live.  PAPER IS THE DEFAULT.
+  # live additionally requires live_enabled: true AND the env ack (see .env.example).
+  run_mode: paper
+  entry_size_sol: 0.02
+  shadow_size_sol: 0.01
+  slippage_bps: 500
+  priority_fee_microlamports: 100000
+  compute_units: 120000
+  jupiter_base_url: https://quote-api.jup.ag/v6
+  live_enabled: false
+  jito:
+    enabled: false
+    tip_lamports: 100000
+  paper:
+    # HONEST COST MODEL — paper P&L is an upper bound even with these on.
+    route_fee_bps: 100          # ~1% route/swap fee
+    amm_fee_bps: 25             # pool LP fee
+    adverse_selection_bps: 75   # price drift between quote and landing
+    base_fee_lamports: 5000
+    ata_rent_lamports: 2039280
+    fill_probability:
+      block_0: 0.30
+      migration: 0.70
+      filter_edge: 0.85
+    rng_seed: null
+
+exits:
+  tiers:
+    - {multiple: 2.0, sell_pct: 50.0}
+    - {multiple: 5.0, sell_pct: 25.0}
+  stop_loss_pct: 60.0
+  max_hold_s: 600.0
+  poll_interval_s: 2.0
+  lp_drop_emergency_pct: 40.0
+  fee_escalation: [1.0, 2.0, 5.0, 10.0, 20.0]
+  sell_retry_delay_s: 1.5
+  blockhash_max_age_s: 45.0
+
+risk:
+  per_trade_cap_usd: 2.0
+  sol_price_usd_fallback: 150.0
+  max_concurrent_positions: 3
+  daily_loss_cap_usd: 10.0
+  daily_fee_cap_sol: 0.05
+  sol_floor: 0.05
+  kill_switch_file: KILL
+  halt_on_unhandled_exception: true
+  kelly_discount: 0.10
+
+dashboard:
+  enabled: true
+  host: 127.0.0.1   # read-only; binding to anything else is refused
+  port: 8787
+
+storage:
+  db_path: data/sniper.db
+
+ntp:
+  enabled: true
+  server: pool.ntp.org
+  max_offset_ms: 250.0
+  halt_on_fail: false
+
+preregistration_file: config/preregistration.json

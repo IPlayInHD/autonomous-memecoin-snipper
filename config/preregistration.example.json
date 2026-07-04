@@ -1,0 +1,6 @@
+{
+  "score_threshold": 0.75,
+  "trigger_mode": "filter_edge",
+  "registered_at": "2026-07-03T00:00:00Z",
+  "notes": "Copy to config/preregistration.json (gitignored) BEFORE collecting evaluation data. Freeze the threshold here first; the evaluation protocol records this file's hash on first run and refuses a GO verdict if it changes mid-sample. Never tune the threshold on the data it is judged on."
+}

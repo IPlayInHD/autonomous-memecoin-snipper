@@ -1,0 +1,27 @@
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+keystore.json
+*.keystore
+config/preregistration.json
+
+# Data / runtime
+data/
+*.db
+*.db-wal
+*.db-shm
+KILL
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+.coverage
+htmlcov/
